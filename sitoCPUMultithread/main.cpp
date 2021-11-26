@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <vector>
+#include <thread>
 
 using namespace std::chrono;
 using namespace std;
@@ -23,7 +24,17 @@ void fun(int start, int end, int n) { // [start,end]  remove multiplicities
 	for (int i = 0; i <=upperBound; i++)
 		if (tab[i]) {
             int number = getNum(i);
-            for (int j = getIndex(number*number);  j <= end; j+=number) {
+
+            int minJ = (getNum(start)/number + 1)*number; // getting first multiplicity that is bigger then start
+
+            if (minJ <= number*number){ // for small start, making sure first number is bigger than square
+                minJ +=number;
+            }
+
+            if ((minJ & 1) == 0)
+                minJ += number;
+
+            for (int j = getIndex(minJ);  j>=start && j <= end; j+=number) { // should be bigger that start
                 tab[j] = false;
             }
         }
@@ -36,12 +47,17 @@ int main() {
 	tab = new bool[getIndex(n)+1];  //replace with array of bits
 	fill_n(tab, getIndex(n)+1, true);
 
-	auto start = high_resolution_clock::now();
-    fun(0,  getIndex(n/2), n);
-    fun(getIndex(n/3+1),  getIndex(2*n/3), n);
-    fun(getIndex(2*n/3+1),  getIndex(n), n);
-    cout<< "from "<< 0 << " to " << getIndex(n/2) << endl;
-    cout<< "from "<< getIndex(n/2+1) << " to " << getIndex(n)+1<< endl;
+    std::thread t1(fun, 0,  getIndex(n/3), n);
+    std::thread t2(fun, getIndex(n/3+1),  getIndex(2*n/3), n);
+    std::thread t3(fun, getIndex(2*n/3+1),  getIndex(n), n);
+
+    auto start = high_resolution_clock::now();
+
+    t1.join();
+    t2.join();
+    t3.join();
+//    fun(0,  getIndex(n), n);
+
     int found = 1; // including number 2
     for(int i=0; i < getIndex(n)+1; i++ ){
         if(tab[i]){
@@ -79,5 +95,7 @@ int main() {
 // goal is for bound of 1000000000 get time around 1s, currently is 9.018258s 50847534
 //new goal after further optimization: 6.801863s
 //1000000 78498 8056ms
+
+// concurrent 4.197049ms 3 threads
 
 //todo test if checks from small numbers speeds up computations
