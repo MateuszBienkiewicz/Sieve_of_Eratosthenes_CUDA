@@ -39,21 +39,28 @@ int main() {
 	auto start = high_resolution_clock::now();
     vector<int> result;
     result.push_back(2);
-    fun(getIndex(5), getIndex(33), n);
+    fun(0,  getIndex(n), n);
+    int found = 1;
     for(int i=0; i < getIndex(n)+1; i++ ){
         if(tab[i])
-            result.push_back(getNum(i));
+            found++;
     }
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 
+    cout << "Liczb pierwszych w zakresie [2, n] jest: " << found;
+    cout << "\nCzas: " << duration.count() << " microsekund." << endl;
 
+    //Output prime numbers(optional)
+/*    for(int i=0; i < getIndex(n)+1; i++ ){
+        if(tab[i])
+            result.push_back(getNum(i));
+    }
 
     for(auto const& value: result){
         cout << value << " ";
-    }
-	cout << "\nCzas: " << duration.count() << " microsekund." << endl;
-	cout << "Liczb pierwszych w zakresie [2, n] jest: " << result.size();
+    }*/
+
 	delete [] tab;
 	return 0;
 }
@@ -62,6 +69,7 @@ int main() {
 // run segments in concurrent threads
 // each thread should receive a chunk and remove non-prime numbers
 // put together the results of each thread
-// goal is for bound of 1000000000 get time around 1s, currently is 9.018258s
+// goal is for bound of 1000000000 get time around 1s, currently is 9.018258s 275423491
+//new goal after further optimization: 6.035774s
 
 //todo test if checks from small numbers speeds up computations
