@@ -4,6 +4,7 @@
 #include <chrono>
 #include <vector>
 #include <thread>
+#include <omp.h>
 
 using namespace std::chrono;
 using namespace std;
@@ -19,8 +20,7 @@ int getIndex(int number){
     return (number-offset)/2;
 }
 
-void calculateSegment(int start, int end) { // [start,end]  remove multiplicities
-    //cout<< start<< "  "<< end<< endl;
+int calculateSegment(int start, int end) { // [start,end]  remove multiplicities
     int upperBound = getIndex(static_cast<int>(sqrt(getNum(end))));
 	for (int i = 0; i <=upperBound; i++)
 
@@ -28,17 +28,9 @@ void calculateSegment(int start, int end) { // [start,end]  remove multiplicitie
 
             int number = getNum(i);
 
-            if (number >= 3*3 && number % 3 == 0)
-                continue;
-
-            if (number >= 5*5 && number % 5 == 0)
-                continue;
-            if (number >= 7*7 && number % 7 == 0)
-                continue;
-
             int minJ = (getNum(start)/number + 1)*number; // getting first multiplicity that is bigger then start
 
-            if (minJ <= number*number){ // for small start, making sure first number is bigger than square
+            if (minJ < number*number){ // for small start, making sure first number is bigger than square
                 minJ +=number;
             }
 
@@ -49,48 +41,50 @@ void calculateSegment(int start, int end) { // [start,end]  remove multiplicitie
                 tab[j] = false;
             }
         }
+    int total = 0;
+    for(int i=start; i < end-1; i++ ){
+        if(tab[i]){
+            total++;
+        }
+    }
+    return total;
 }
 
 int main() {
 	int n;
 	cout << "Podaj n: ";
 	cin >> n ;
+    omp_set_num_threads(omp_get_num_procs());
+
 	tab = new bool[getIndex(n)+1];  //replace with array of bits
 	fill_n(tab, getIndex(n)+1, true);
     cout<< "Generated data" << endl;
-    int nThreads = 4;
-
-    vector<thread> threadPool;
-
-    threadPool.reserve(nThreads);
-
-    for (int i=0; i < nThreads ; i++){
-        threadPool.emplace_back(calculateSegment, getIndex(i*(n/nThreads)),  1+getIndex(n/nThreads*(i+1)));
-        //cout<< "Starting thread " << i+1 << endl;
-    }
+    int segments = 100;
 
     auto start = high_resolution_clock::now();
 
-    for(auto & thread: threadPool){
-        thread.join();
-    }
+    int total = 1; //include number 2
 
-    int found = 1; // including number 2
-    for(int i=0; i < getIndex(n)+1; i++ ){
-        if(tab[i]){
-            found++;
+    #pragma omp parallel for reduction(+:total) default(none) shared(segments,n,cout)
+    for (int i=0; i < segments ; i++){
+
+        int startSeg = getIndex(i*(n/segments));
+        int endSeg = 1 + getIndex((i+1)*(n/segments));
+
+        if(startSeg<0){
+            startSeg=0;
         }
+        total+=calculateSegment(startSeg,endSeg);
     }
 
 	auto stop = high_resolution_clock::now();
 
 	auto duration = duration_cast<microseconds>(stop - start);
 
-    cout << "Liczb pierwszych w zakresie [2, n] jest: " << found;
+    cout << "Liczb pierwszych w zakresie [2, n] jest: " << total;
     cout << "\nCzas: " << duration.count() << " microsekund." << endl;
 
-    //Prepare vector of output prime numbers(optional)
-/*
+/*    //Prepare vector of output prime numbers(optional)
     vector<int> result;
     result.push_back(2);
     for(int i=0; i < getIndex(n)+1; i++ ){
@@ -106,15 +100,9 @@ int main() {
 	delete [] tab;
 	return 0;
 }
-// adapt implentation to mut
+
 // generate segments
 // run segments in concurrent threads
 // each thread should receive a chunk and remove non-prime numbers
 // put together the results of each thread
-// goal is for bound of 1000000000 get time around 1s, currently is 9.018258s 50847534
-//new goal after further optimization: 6.801863s
-//1000000 78498 8056ms
-
-// concurrent 4.197049ms 3 threads
-
-//todo test if checks from small numbers speeds up computations
+// goal is for bound of 1000000000 get time around 1s, currently is 3.529232s 50847534
