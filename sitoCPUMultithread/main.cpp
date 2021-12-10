@@ -55,13 +55,13 @@ int main() {
 	cout << "Podaj n: ";
 	cin >> n ;
     omp_set_num_threads(omp_get_num_procs());
-
+    auto start = high_resolution_clock::now();
 	tab = new bool[getIndex(n)+1];  //replace with array of bits
 	fill_n(tab, getIndex(n)+1, true);
     cout<< "Generated data" << endl;
-    int segments = 100;
+    int segments = 1000;
 
-    auto start = high_resolution_clock::now();
+
 
     int total = 1; //include number 2
 
@@ -105,4 +105,4 @@ int main() {
 // run segments in concurrent threads
 // each thread should receive a chunk and remove non-prime numbers
 // put together the results of each thread
-// goal is for bound of 1000000000 get time around 1s, currently is 3.529232s 50847534
+// goal is for bound of 1000000000 get time around 1s 50847534
