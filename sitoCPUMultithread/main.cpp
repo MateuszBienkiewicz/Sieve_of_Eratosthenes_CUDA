@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <vector>
-#include <thread>
 #include <omp.h>
 
 using namespace std::chrono;
@@ -60,8 +59,6 @@ int main() {
 	fill_n(tab, getIndex(n)+1, true);
     cout<< "Generated data" << endl;
     int segments = 1000;
-
-
 
     int total = 1; //include number 2
 
