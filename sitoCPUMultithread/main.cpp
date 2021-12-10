@@ -23,8 +23,18 @@ void calculateSegment(int start, int end) { // [start,end]  remove multiplicitie
     //cout<< start<< "  "<< end<< endl;
     int upperBound = getIndex(static_cast<int>(sqrt(getNum(end))));
 	for (int i = 0; i <=upperBound; i++)
+
 		if (tab[i]) {
+
             int number = getNum(i);
+
+            if (number >= 3*3 && number % 3 == 0)
+                continue;
+
+            if (number >= 5*5 && number % 5 == 0)
+                continue;
+            if (number >= 7*7 && number % 7 == 0)
+                continue;
 
             int minJ = (getNum(start)/number + 1)*number; // getting first multiplicity that is bigger then start
 
@@ -48,13 +58,14 @@ int main() {
 	tab = new bool[getIndex(n)+1];  //replace with array of bits
 	fill_n(tab, getIndex(n)+1, true);
     cout<< "Generated data" << endl;
-    int nThreads = 8;
+    int nThreads = 4;
 
     vector<thread> threadPool;
 
+    threadPool.reserve(nThreads);
 
     for (int i=0; i < nThreads ; i++){
-        threadPool.emplace_back(calculateSegment, 1+getIndex(i*(n/nThreads)),  1+getIndex(n/nThreads*(i+1)));
+        threadPool.emplace_back(calculateSegment, getIndex(i*(n/nThreads)),  1+getIndex(n/nThreads*(i+1)));
         //cout<< "Starting thread " << i+1 << endl;
     }
 
