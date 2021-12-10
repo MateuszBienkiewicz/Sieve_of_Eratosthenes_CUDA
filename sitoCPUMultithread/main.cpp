@@ -19,8 +19,9 @@ int getIndex(int number){
     return (number-offset)/2;
 }
 
-void fun(int start, int end, int n) { // [start,end]  remove multiplicities
-    int upperBound = getIndex(static_cast<int>(sqrt(n)));
+void calculateSegment(int start, int end) { // [start,end]  remove multiplicities
+    //cout<< start<< "  "<< end<< endl;
+    int upperBound = getIndex(static_cast<int>(sqrt(getNum(end))));
 	for (int i = 0; i <=upperBound; i++)
 		if (tab[i]) {
             int number = getNum(i);
@@ -46,17 +47,22 @@ int main() {
 	cin >> n ;
 	tab = new bool[getIndex(n)+1];  //replace with array of bits
 	fill_n(tab, getIndex(n)+1, true);
+    cout<< "Generated data" << endl;
+    int nThreads = 8;
 
-    std::thread t1(fun, 0,  getIndex(n/3), n);
-    std::thread t2(fun, getIndex(n/3+1),  getIndex(2*n/3), n);
-    std::thread t3(fun, getIndex(2*n/3+1),  getIndex(n), n);
+    vector<thread> threadPool;
+
+
+    for (int i=0; i < nThreads ; i++){
+        threadPool.emplace_back(calculateSegment, 1+getIndex(i*(n/nThreads)),  1+getIndex(n/nThreads*(i+1)));
+        //cout<< "Starting thread " << i+1 << endl;
+    }
 
     auto start = high_resolution_clock::now();
 
-    t1.join();
-    t2.join();
-    t3.join();
-//    fun(0,  getIndex(n), n);
+    for(auto & thread: threadPool){
+        thread.join();
+    }
 
     int found = 1; // including number 2
     for(int i=0; i < getIndex(n)+1; i++ ){
@@ -64,7 +70,9 @@ int main() {
             found++;
         }
     }
+
 	auto stop = high_resolution_clock::now();
+
 	auto duration = duration_cast<microseconds>(stop - start);
 
     cout << "Liczb pierwszych w zakresie [2, n] jest: " << found;
